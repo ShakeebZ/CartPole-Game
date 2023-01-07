@@ -40,7 +40,7 @@ def main():
     environment.close()
             
         
-def discrete_states(state, env,initial, buckets=(1, 1, 6, 12)):
+def discrete_states(state, env, buckets=(1, 1, 6, 12)):
     """Function to turn continuous states in the CartPole Game Environment into Discrete States so that the state
         can be used with Q-Learning
 
@@ -55,21 +55,11 @@ def discrete_states(state, env,initial, buckets=(1, 1, 6, 12)):
     
     upperBounds = [env.observation_space.high[0], 0.5, env.observation_space.high[2], math.radians(50) / 1.]
     lowerBounds = [env.observation_space.low[0], -0.5, env.observation_space.low[2], -math.radians(50) / 1.]
-    # print(upperBounds)
-    # print("----------------------------")
-    # print(lowerBounds)
-    # print ("oooooooooooooooooooooooooooooooooo")
-    # print(state)
-    # print("-------------------------------")
-    # print(state[0])
-    # print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-    # print(state[0][0])
-    if initial is True:
-        ratios = [(state[0][i] + abs(lowerBounds[i])) / (upperBounds[i] - lowerBounds[i]) for i in range(len(state))]
-    else:
-        ratios = [(state[i] + abs(lowerBounds[i])) / (upperBounds[i] - lowerBounds[i]) for i in range(len(state))]
+    
+    ratios = [(state[i] + abs(lowerBounds[i])) / (upperBounds[i] - lowerBounds[i]) for i in range(len(state))]
     state_ = [int(round((buckets[i] - 1) * ratios[i])) for i in range(len(state))]
     state_ = [min(buckets[i] - 1, max(0, state_[i])) for i in range(len(state))]
+        
     
     return tuple(state_)
     
@@ -89,7 +79,7 @@ def QLearning(env, numberOfEpisodes):
     total_reward = []
     for e in range(numberOfEpisodes):
         state=env.reset()
-        state = discrete_states(state, env, initial=True)
+        state = discrete_states(state[0], env)
         alpha = exploration_rate = get_rate(e)
         
         episode_reward = 0
@@ -98,15 +88,13 @@ def QLearning(env, numberOfEpisodes):
         while (terminated is False) and (truncated is False):
             action = epsilon_greedy_policy(state, env, Q_table, exploration_rate)
             new_state, reward, terminated, truncated, _ = env.step(action)
-            new_state = discrete_states(new_state, env, initial=False)
+            new_state = discrete_states(new_state, env)
             
             Q_table = update_Q(Q_table, state, action, reward, new_state, alpha, gamma)
             
             state = new_state
-            print(state)
             episode_reward += reward
         total_reward.append(episode_reward)
-        print(total_reward)
     print("Finished Training.")
     return Q_table, total_reward
 
