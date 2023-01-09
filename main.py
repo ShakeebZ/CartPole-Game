@@ -1,13 +1,13 @@
-import gymnasium, math, imageio, os, time, numpy
+import gymnasium, math, numpy
 import matplotlib.pyplot as plt
-from pyvirtualdisplay import Display
 
 def main():
-    numpy.random.seed(42)
-    environment = gymnasium.make("CartPole-v1", render_mode="human")
-    # fakeDisplay = False
-    # createDisplay(fakeDisplay)
+    print("This program solves the CartPole game through the use of a Q-Learning Algorithm using an Epsilon-Greedy Policy.")
     
+    numpy.random.seed(42)
+    
+    environment = gymnasium.make("CartPole-v1", render_mode="human")
+    input("Press Enter to see an untrained algorithm attempt the algorithm.")
     for generation in range(1):
         state = environment.reset()
         for step in range(200):
@@ -21,15 +21,26 @@ def main():
                 break
     environment.close()
     
-    
-    environment = gymnasium.make("CartPole-v1", render_mode="human")
+    input("Press Enter to train the Algorithm.")
+    environment = gymnasium.make("CartPole-v1")
     Q_Table, rewardList = QLearning(environment, 1000)
     
+    input("Press Enter to see an Algorithm trained with Q-Learning and using an Epsilon-Greedy Policy solve the CartPole Game.")
+    environment = gymnasium.make("CartPole-v1", render_mode="human")
     for generation in range(1):
         state = environment.reset()
+        environment.render()
+        state = discrete_states(state[0], environment)
+        action = epsilon_greedy_policy(state, environment, Q_Table, exploration_rate=0)
+        new_state, reward, terminated, truncated, info = environment.step(action)
+        new_state = discrete_states(new_state, environment)
+        state = new_state
+        if terminated or truncated:
+            print("Episode finished after {} timesteps".format(step+1))
+            break
+        
         for step in range(200):
             environment.render()
-            
             action = epsilon_greedy_policy(state, environment, Q_Table, exploration_rate=0)
             new_state, reward, terminated, truncated, info = environment.step(action)
             new_state = discrete_states(new_state, environment)
@@ -78,6 +89,7 @@ def QLearning(env, numberOfEpisodes):
     
     total_reward = []
     for e in range(numberOfEpisodes):
+        print("Training in Progress: {}/1000".format(e))
         state=env.reset()
         state = discrete_states(state[0], env)
         alpha = exploration_rate = get_rate(e)
@@ -120,16 +132,6 @@ def epsilon_greedy_policy(state, env, Q_table, exploration_rate):
     
 def get_rate(e):
     return max(0.1, min(1., 1. - numpy.log10((e + 1) / 25.)))
-    
-def createDisplay(fake_display):
-    if fake_display is False:
-        display = Display(visible=0, size =(700,450))
-        display.start()
-        is_ipython = 'inline' in plt.get_backend()
-        if is_ipython:
-            from IPython import display
-        plt.ion()
-        fake_display=True
 
 if __name__ == "__main__":
     main()
